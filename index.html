@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Botonera de sonidos</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      font-family: Arial, sans-serif;
+
+      /* Fondo */
+      background-image: url("fondo.jpg");
+      background-size: auto 100%;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.75);
+      padding: 40px;
+      border-radius: 20px;
+    }
+
+    button {
+      font-size: 24px;
+      padding: 20px 40px;
+      margin: 15px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      background-color: #091250;
+      color: white;
+    }
+
+    button:hover {
+      background-color: #F27444;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <button onclick="playSound('sonido1')">Sonido 1</button>
+    <button onclick="playSound('sonido2')">Sonido 2</button>
+  </div>
+
+  <audio id="sonido1" src="sonido1.m4a"></audio>
+  <audio id="sonido2" src="sonido2.m4a"></audio>
+
+  <script>
+    function playSound(id) {
+      const audio = document.getElementById(id);
+      audio.currentTime = 0;
+      audio.play();
+    }
+  </script>
+</body>
+</html>
