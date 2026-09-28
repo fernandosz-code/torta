@@ -1,0 +1,14 @@
+Canción de ejemplo
+Capo: 2
+
+[Intro] G  D  Em  C
+
+G                    D
+Esta es la primera línea
+        Em                  C
+y esta es la segunda línea
+
+G                D
+Acá va el estribillo
+        Em               C
+con más acordes arriba
