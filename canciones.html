@@ -11,9 +11,9 @@
       --naranja: #F27444;
     }
     * { box-sizing: border-box; }
-    body {
+    html, body {
       margin: 0;
-      min-height: 100vh;
+      height: 100%;
       font-family: Arial, sans-serif;
       background: #f4f4f4;
       color: #111;
@@ -58,69 +58,90 @@
       margin-top: 40px;
     }
 
+    /* Visor: ocupa toda la pantalla, sin recuadros, y es la propia zona
+       de scroll (el título es el principio del contenido, no queda fijo). */
     #visor {
       display: none;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 16px;
-    }
-    #visor h2 { text-align: center; }
-
-    #controles {
-      position: sticky;
-      top: 0;
+      position: fixed;
+      inset: 0;
       background: #f4f4f4;
-      padding: 10px 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      z-index: 10;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    #controles button {
-      font-size: 18px;
-      padding: 10px 18px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      background: var(--azul);
-      color: white;
-    }
-    #controles button:hover { background: var(--naranja); }
-    .velocidad {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: white;
-      padding: 6px 14px;
-      border-radius: 10px;
-    }
-    .velocidad button {
-      padding: 6px 14px;
-      font-size: 16px;
-    }
-    #valor-velocidad {
-      min-width: 18px;
+
+    #titulo-cancion {
+      margin: 0;
+      padding: 22px 16px 6px;
       text-align: center;
-      font-weight: bold;
+      font-size: 20px;
+      color: var(--azul);
     }
 
     #contenido {
-      background: white;
-      border-radius: 10px;
-      padding: 24px;
-      margin-top: 12px;
-      white-space: pre;
+      margin: 0;
+      padding: 0 12px 40vh;
+      white-space: pre-wrap;
+      word-break: break-word;
       font-family: "Courier New", monospace;
-      font-size: 18px;
+      font-size: 17px;
       line-height: 1.6;
-      overflow-x: auto;
-      overflow-y: auto;
-      max-height: 70vh;
     }
     #contenido .acorde {
       color: var(--naranja);
+      font-weight: bold;
+    }
+
+    /* Controles flotantes: semitransparentes, tamaño fijo (no se agrandan
+       al cambiar el texto/ícono) y se ocultan solos mientras reproduce. */
+    #controles {
+      position: fixed;
+      left: 50%;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(9, 18, 80, 0.55);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 20;
+      opacity: 1;
+      transition: opacity 0.4s ease;
+    }
+    #controles.oculto {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .control-btn {
+      flex: 0 0 auto;
+      width: 46px;
+      height: 46px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.18);
+      color: white;
+      font-size: 18px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .control-btn:hover, .control-btn:active { background: var(--naranja); }
+    .control-btn-sm { width: 34px; height: 34px; font-size: 15px; }
+    .velocidad {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: white;
+      font-size: 14px;
+      padding: 0 2px;
+    }
+    #valor-velocidad {
+      min-width: 16px;
+      text-align: center;
       font-weight: bold;
     }
   </style>
@@ -139,26 +160,28 @@
 
   <div id="visor">
     <h2 id="titulo-cancion"></h2>
+    <pre id="contenido"></pre>
+
     <div id="controles">
-      <button id="btn-volver">&larr; Lista</button>
-      <button id="btn-play-pause">&#9654; Play</button>
+      <button id="btn-volver" class="control-btn" aria-label="Volver a la lista" title="Volver">&larr;</button>
+      <button id="btn-play-pause" class="control-btn" aria-label="Reproducir o pausar" title="Play / Pause">&#9654;</button>
       <div class="velocidad">
-        <span>Velocidad</span>
-        <button id="btn-menos">&minus;</button>
+        <button id="btn-menos" class="control-btn control-btn-sm" aria-label="Bajar velocidad">&minus;</button>
         <span id="valor-velocidad">3</span>
-        <button id="btn-mas">+</button>
+        <button id="btn-mas" class="control-btn control-btn-sm" aria-label="Subir velocidad">+</button>
       </div>
     </div>
-    <pre id="contenido"></pre>
   </div>
 
   <script>
+    const headerEl = document.querySelector('header');
     const listaEl = document.getElementById('lista-canciones');
     const listaVaciaEl = document.getElementById('lista-vacia');
     const listaContainer = document.getElementById('lista');
     const visor = document.getElementById('visor');
     const tituloEl = document.getElementById('titulo-cancion');
     const contenidoEl = document.getElementById('contenido');
+    const controlesEl = document.getElementById('controles');
     const btnPlayPause = document.getElementById('btn-play-pause');
     const valorVelocidadEl = document.getElementById('valor-velocidad');
 
@@ -244,15 +267,18 @@
     function abrirCancion(cancion) {
       tituloEl.textContent = cancion.title;
       renderizarCancion(cancion.texto);
-      contenidoEl.scrollTop = 0;
+      headerEl.style.display = 'none';
       listaContainer.style.display = 'none';
       visor.style.display = 'block';
+      visor.scrollTop = 0;
       detener();
+      mostrarControles();
     }
 
     function volverALista() {
       detener();
       visor.style.display = 'none';
+      headerEl.style.display = 'flex';
       listaContainer.style.display = 'block';
     }
 
@@ -262,18 +288,19 @@
       } else {
         reproducir();
       }
+      mostrarControles();
     }
 
     function reproducir() {
       reproduciendo = true;
-      btnPlayPause.innerHTML = '&#10074;&#10074; Pause';
-      posicionScroll = contenidoEl.scrollTop;
+      btnPlayPause.innerHTML = '&#10074;&#10074;';
+      posicionScroll = visor.scrollTop;
       ultimoTiempo = null;
       const paso = (tiempo) => {
         if (ultimoTiempo !== null) {
           const deltaSegundos = (tiempo - ultimoTiempo) / 1000;
           posicionScroll += velocidad * PIXELES_POR_SEGUNDO_POR_UNIDAD * deltaSegundos;
-          contenidoEl.scrollTop = posicionScroll;
+          visor.scrollTop = posicionScroll;
         }
         ultimoTiempo = tiempo;
         scrollAnimId = requestAnimationFrame(paso);
@@ -283,7 +310,7 @@
 
     function detener() {
       reproduciendo = false;
-      btnPlayPause.innerHTML = '&#9654; Play';
+      btnPlayPause.innerHTML = '&#9654;';
       if (scrollAnimId) cancelAnimationFrame(scrollAnimId);
       scrollAnimId = null;
       ultimoTiempo = null;
@@ -292,7 +319,25 @@
     function cambiarVelocidad(delta) {
       velocidad = Math.min(10, Math.max(1, velocidad + delta));
       valorVelocidadEl.textContent = velocidad;
+      mostrarControles();
     }
+
+    // Los controles son semitransparentes y se ocultan solos a los pocos
+    // segundos mientras se está reproduciendo; tocar la pantalla los
+    // vuelve a mostrar.
+    let ocultarControlesId = null;
+    function mostrarControles() {
+      controlesEl.classList.remove('oculto');
+      if (ocultarControlesId) clearTimeout(ocultarControlesId);
+      ocultarControlesId = setTimeout(() => {
+        if (reproduciendo) controlesEl.classList.add('oculto');
+      }, 2500);
+    }
+
+    visor.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('#controles')) return;
+      mostrarControles();
+    });
 
     document.getElementById('btn-volver').onclick = volverALista;
     btnPlayPause.onclick = togglePlay;
