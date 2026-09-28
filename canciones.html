@@ -119,6 +119,10 @@
       overflow-y: auto;
       max-height: 70vh;
     }
+    #contenido .acorde {
+      color: var(--naranja);
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -165,14 +169,40 @@
     let posicionScroll = 0;
     let ultimoTiempo = null;
 
+    // El repo es público: se lista la carpeta songs/ directo desde la API
+    // de GitHub, así cualquier .txt que se suba ahí aparece solo, sin
+    // mantener un índice aparte.
+    const GITHUB_OWNER = 'fernandosz-code';
+    const GITHUB_REPO = 'torta';
+    const GITHUB_RAMA = 'main';
+
     async function cargarLista() {
       try {
-        const resp = await fetch('songs/index.json');
-        const canciones = await resp.json();
-        if (!canciones.length) {
+        const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/songs?ref=${GITHUB_RAMA}`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('No se pudo listar la carpeta songs (' + resp.status + ')');
+        const items = await resp.json();
+        const archivosTxt = items.filter(
+          (item) => item.type === 'file' && item.name.toLowerCase().endsWith('.txt')
+        );
+        if (!archivosTxt.length) {
           listaVaciaEl.style.display = 'block';
           return;
         }
+
+        const canciones = await Promise.all(
+          archivosTxt.map(async (item) => {
+            const texto = await (await fetch(item.download_url)).text();
+            const primeraLinea = texto.split('\n')[0].trim();
+            return {
+              title: primeraLinea || item.name.replace(/\.txt$/i, ''),
+              file: item.name,
+              texto,
+            };
+          })
+        );
+        canciones.sort((a, b) => a.title.localeCompare(b.title, 'es'));
+
         canciones.forEach((c) => {
           const li = document.createElement('li');
           const btn = document.createElement('button');
@@ -187,11 +217,33 @@
       }
     }
 
-    async function abrirCancion(cancion) {
-      const resp = await fetch('songs/' + cancion.file);
-      const texto = await resp.text();
+    // Una línea se considera "de acordes" si TODOS sus tokens (separados
+    // por espacios) tienen forma de acorde (G, Em, A7, F#m, Cmaj7, G/B, N.C., etc.)
+    const ACORDE_REGEX = /^(N\.?C\.?|[A-G](#|b)?(maj|min|m|dim|aug|sus|add)?[0-9]*(\/[A-G](#|b)?)?)$/i;
+
+    function esLineaDeAcordes(linea) {
+      const tokens = linea.trim().split(/\s+/).filter(Boolean);
+      return tokens.length > 0 && tokens.every((t) => ACORDE_REGEX.test(t));
+    }
+
+    function escapeHtml(texto) {
+      return texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function renderizarCancion(texto) {
+      const html = texto
+        .split('\n')
+        .map((linea) => {
+          const escapada = escapeHtml(linea);
+          return esLineaDeAcordes(linea) ? `<span class="acorde">${escapada}</span>` : escapada;
+        })
+        .join('\n');
+      contenidoEl.innerHTML = html;
+    }
+
+    function abrirCancion(cancion) {
       tituloEl.textContent = cancion.title;
-      contenidoEl.textContent = texto;
+      renderizarCancion(cancion.texto);
       contenidoEl.scrollTop = 0;
       listaContainer.style.display = 'none';
       visor.style.display = 'block';
