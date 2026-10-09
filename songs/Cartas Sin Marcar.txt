@@ -4,7 +4,6 @@ Andrés Calamaro
 Key:  C
 
 [Primera Parte]
-
               C
 Igual que un niño abandonado
            Am
@@ -15,17 +14,15 @@ Yo te busco
 Desesperado
      Dm
 Necesito un amigo
-      F
-Necesito que alguien
-                  Am  G
-Quiera hablar conmigo
+      F                                Am  G
+Necesito que alguien quiera hablar conmigo
           C
 Cuando empieza a amanecer
        Am
 La verdad es tan cruel
          Em
 Y tu lo sabes
-
+         Em
 Eres testigo
        Dm
 Ahora soy un mendigo
@@ -33,7 +30,6 @@ Ahora soy un mendigo
 Que camina por las calles perdido
 
 [Estribillo]
-
               C
 No me siento bien
 
@@ -51,21 +47,19 @@ Igual que un niño abandonado
 Que en la calle lo han dejado
        Em
 Yo te busco
-
+       Em
 Desesperado
      Dm
 Necesito un amigo
-     F
-Necesito que alguien
-                  Am  G
-Quiera hablar conmigo
+      F                                Am  G
+Necesito que alguien quiera hablar conmigo
           C
 Cuando empieza a amanecer
        Am
 La verdad es tan cruel
          Em
 Y tu lo sabes
-
+         Em
 Eres testigo
        Dm
 Ahora soy un mendigo
@@ -73,7 +67,6 @@ Ahora soy un mendigo
 Que camina por las calles perdido
 
 [Estribillo]
-
               C
 No me siento bien
 
@@ -88,7 +81,6 @@ No se puede cambiar
 [Solo] Am
 
 [Estribillo]
-
               C
 No me siento bien
 
@@ -110,4 +102,5 @@ La suerte juega con carta sin marcar
                  G
 No se puede cambiar
 
-[Ending] F  C
+[Ending] 
+F  C
