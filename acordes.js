@@ -1,0 +1,12 @@
+// Diagramas de acordes de guitarra para "Canciones de Torta".
+//
+// Cada entrada se busca por el texto EXACTO del acorde tal como aparece en
+// los archivos de songs/ (ej: "Em", "F#m", "Am/G"). Los datos de digitación
+// (baseFret/frets/fingers/barres) salen de chords-db (MIT License):
+// https://github.com/tombatossals/chords-db
+//
+// Si agregás una canción con un acorde que no está acá, el acorde igual se
+// resalta y es clickeable, pero al tocarlo va a avisar que no tiene
+// diagrama todavía. Para agregarlo, pedile a Claude que regenere este
+// archivo incluyendo el acorde nuevo (usa el mismo dataset de chords-db).
+const ACORDES_DB = {"A":{"baseFret":1,"frets":[-1,0,2,2,2,0],"fingers":[0,0,1,2,3,0],"barres":[]},"Am":{"baseFret":1,"frets":[-1,0,2,2,1,0],"fingers":[0,0,2,3,1,0],"barres":[]},"Am/G":{"baseFret":1,"frets":[3,0,2,2,1,0],"fingers":[4,0,2,3,1,0],"barres":[]},"B7":{"baseFret":1,"frets":[-1,2,1,2,0,2],"fingers":[0,2,1,3,0,4],"barres":[]},"Bb":{"baseFret":1,"frets":[-1,1,3,3,3,1],"fingers":[0,1,2,3,4,1],"barres":[1]},"Bm":{"baseFret":1,"frets":[2,2,4,4,3,2],"fingers":[1,1,3,4,2,1],"barres":[2]},"C":{"baseFret":1,"frets":[-1,3,2,0,1,0],"fingers":[0,3,2,0,1,0],"barres":[]},"Cm":{"baseFret":1,"frets":[-1,3,1,0,1,3],"fingers":[0,3,2,0,1,4],"barres":[]},"Cmaj7":{"baseFret":1,"frets":[3,3,2,0,0,0],"fingers":[2,3,1,0,0,0],"barres":[]},"Csus4":{"baseFret":1,"frets":[-1,3,3,0,1,1],"fingers":[0,3,4,0,1,1],"barres":[1]},"D":{"baseFret":1,"frets":[-1,-1,0,2,3,2],"fingers":[0,0,0,1,3,2],"barres":[]},"Dm":{"baseFret":1,"frets":[-1,-1,0,2,3,1],"fingers":[0,0,0,2,3,1],"barres":[]},"Dsus4":{"baseFret":1,"frets":[-1,-1,0,2,3,3],"fingers":[0,0,0,1,2,3],"barres":[]},"E":{"baseFret":1,"frets":[0,2,2,1,0,0],"fingers":[0,2,3,1,0,0],"barres":[]},"Eb":{"baseFret":1,"frets":[-1,-1,1,3,4,3],"fingers":[0,0,1,2,4,3],"barres":[]},"Ebdim":{"baseFret":1,"frets":[-1,-1,1,2,-1,2],"fingers":[0,0,1,2,0,3],"barres":[]},"Em":{"baseFret":1,"frets":[0,2,2,0,0,0],"fingers":[0,2,3,0,0,0],"barres":[]},"Em/B":{"baseFret":1,"frets":[-1,2,2,0,0,0],"fingers":[0,1,2,0,0,0],"barres":[]},"F":{"baseFret":1,"frets":[1,3,3,2,1,1],"fingers":[1,3,4,2,1,1],"barres":[1]},"F#7":{"baseFret":1,"frets":[2,4,2,3,2,2],"fingers":[1,3,1,2,1,1],"barres":[2]},"F#m":{"baseFret":1,"frets":[2,4,4,2,2,2],"fingers":[1,3,4,1,1,1],"barres":[2]},"G":{"baseFret":1,"frets":[3,2,0,0,0,3],"fingers":[2,1,0,0,0,3],"barres":[]},"Gbm":{"baseFret":1,"frets":[2,4,4,2,2,2],"fingers":[1,3,4,1,1,1],"barres":[2]}};

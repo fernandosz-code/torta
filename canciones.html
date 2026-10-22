@@ -86,10 +86,73 @@
       font-size: 17px;
       line-height: 1.6;
     }
-    #contenido .acorde {
+    #contenido .acorde-separador {
       color: var(--naranja);
       font-weight: bold;
     }
+    #contenido .acorde-boton {
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font: inherit;
+      color: var(--naranja);
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: underline dotted;
+      text-underline-offset: 3px;
+    }
+    #contenido .acorde-boton:hover,
+    #contenido .acorde-boton:focus-visible {
+      color: var(--azul);
+      background: rgba(242, 116, 68, 0.25);
+      border-radius: 4px;
+    }
+
+    /* Modal con el diagrama del acorde */
+    #modal-acorde.modal-oculto { display: none; }
+    #modal-acorde {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(9, 18, 80, 0.55);
+    }
+    #modal-caja {
+      position: relative;
+      background: white;
+      border-radius: 16px;
+      padding: 20px 24px 24px;
+      max-width: 260px;
+      width: 85vw;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    #modal-titulo {
+      margin: 0 0 8px;
+      color: var(--azul);
+      font-size: 22px;
+    }
+    #modal-cerrar {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      background: none;
+      border: none;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+      color: #888;
+      padding: 6px 10px;
+    }
+    #modal-diagrama svg { width: 100%; height: auto; display: block; }
+    #modal-sin-datos { color: #666; font-size: 14px; margin: 12px 0 0; }
 
     /* Controles flotantes: semitransparentes, tamaño fijo (no se agrandan
        al cambiar el texto/ícono) y se ocultan solos mientras reproduce. */
@@ -173,6 +236,17 @@
     </div>
   </div>
 
+  <div id="modal-acorde" class="modal-oculto">
+    <div id="modal-backdrop"></div>
+    <div id="modal-caja" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+      <button type="button" id="modal-cerrar" aria-label="Cerrar">&times;</button>
+      <h3 id="modal-titulo"></h3>
+      <div id="modal-diagrama"></div>
+      <p id="modal-sin-datos" style="display: none;">No tengo el diagrama de este acorde todavía.</p>
+    </div>
+  </div>
+
+  <script src="acordes.js"></script>
   <script>
     const headerEl = document.querySelector('header');
     const listaEl = document.getElementById('lista-canciones');
@@ -262,16 +336,137 @@
       return texto.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
+    // Dentro de una línea de acordes, cada token se vuelve un botón
+    // clickeable por separado (preservando los espacios tal cual, para no
+    // romper la alineación con la letra).
+    function renderizarLineaAcordes(linea) {
+      return linea
+        .split(/(\s+)/)
+        .map((parte) => {
+          if (parte === '') return '';
+          if (/^\s+$/.test(parte)) return escapeHtml(parte);
+          if (SEPARADOR_REGEX.test(parte)) {
+            return `<span class="acorde-separador">${escapeHtml(parte)}</span>`;
+          }
+          return `<button type="button" class="acorde-boton" data-acorde="${escapeHtml(parte)}">${escapeHtml(parte)}</button>`;
+        })
+        .join('');
+    }
+
     function renderizarCancion(texto) {
       const html = texto
         .split('\n')
-        .map((linea) => {
-          const escapada = escapeHtml(linea);
-          return esLineaDeAcordes(linea) ? `<span class="acorde">${escapada}</span>` : escapada;
-        })
+        .map((linea) => (esLineaDeAcordes(linea) ? renderizarLineaAcordes(linea) : escapeHtml(linea)))
         .join('\n');
       contenidoEl.innerHTML = html;
     }
+
+    // Diagrama de acorde en SVG a partir de los datos de ACORDES_DB
+    // (baseFret/frets/fingers/barres, formato de chords-db).
+    function construirSvgAcorde(datos) {
+      const { baseFret, frets, fingers, barres } = datos;
+      const anchoSvg = 140;
+      const altoSvg = 180;
+      const margenX = 24;
+      const margenYsup = 34;
+      const margenYinf = 16;
+      const numCuerdas = 6;
+      const numTrastes = 4;
+      const anchoGrid = anchoSvg - margenX * 2;
+      const altoGrid = altoSvg - margenYsup - margenYinf;
+      const pasoX = anchoGrid / (numCuerdas - 1);
+      const pasoY = altoGrid / numTrastes;
+      const AZUL = '#091250';
+
+      let svg = `<svg viewBox="0 0 ${anchoSvg} ${altoSvg}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama de acorde">`;
+
+      for (let c = 0; c < numCuerdas; c++) {
+        const x = margenX + c * pasoX;
+        svg += `<line x1="${x}" y1="${margenYsup}" x2="${x}" y2="${margenYsup + altoGrid}" stroke="${AZUL}" stroke-width="1.5" />`;
+      }
+
+      for (let f = 0; f <= numTrastes; f++) {
+        const y = margenYsup + f * pasoY;
+        const grosor = f === 0 && baseFret === 1 ? 4 : 1.5;
+        svg += `<line x1="${margenX}" y1="${y}" x2="${margenX + anchoGrid}" y2="${y}" stroke="${AZUL}" stroke-width="${grosor}" />`;
+      }
+
+      if (baseFret > 1) {
+        svg += `<text x="${margenX - 10}" y="${margenYsup + pasoY * 0.5 + 5}" font-size="13" fill="${AZUL}" text-anchor="end" font-family="Arial, sans-serif">${baseFret}</text>`;
+      }
+
+      frets.forEach((valor, i) => {
+        const x = margenX + i * pasoX;
+        if (valor === -1) {
+          svg += `<text x="${x}" y="${margenYsup - 12}" font-size="15" fill="${AZUL}" text-anchor="middle" font-family="Arial, sans-serif">&#10005;</text>`;
+        } else if (valor === 0) {
+          svg += `<circle cx="${x}" cy="${margenYsup - 18}" r="5" fill="none" stroke="${AZUL}" stroke-width="1.5" />`;
+        }
+      });
+
+      (barres || []).forEach((valorBarra) => {
+        const indices = [];
+        frets.forEach((v, i) => { if (v === valorBarra) indices.push(i); });
+        if (indices.length < 2) return;
+        const i1 = Math.min(...indices);
+        const i2 = Math.max(...indices);
+        const y = margenYsup + (valorBarra - 0.5) * pasoY;
+        const x1 = margenX + i1 * pasoX;
+        const x2 = margenX + i2 * pasoX;
+        svg += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${AZUL}" stroke-width="10" stroke-linecap="round" opacity="0.85" />`;
+      });
+
+      frets.forEach((valor, i) => {
+        if (valor <= 0) return;
+        const x = margenX + i * pasoX;
+        const y = margenYsup + (valor - 0.5) * pasoY;
+        svg += `<circle cx="${x}" cy="${y}" r="8" fill="${AZUL}" />`;
+        const dedo = fingers && fingers[i];
+        if (dedo) {
+          svg += `<text x="${x}" y="${y + 4}" font-size="10" fill="white" text-anchor="middle" font-family="Arial, sans-serif">${dedo}</text>`;
+        }
+      });
+
+      svg += '</svg>';
+      return svg;
+    }
+
+    const modalAcorde = document.getElementById('modal-acorde');
+    const modalTitulo = document.getElementById('modal-titulo');
+    const modalDiagrama = document.getElementById('modal-diagrama');
+    const modalSinDatos = document.getElementById('modal-sin-datos');
+
+    function mostrarAcorde(nombre) {
+      modalTitulo.textContent = nombre;
+      const datos = typeof ACORDES_DB !== 'undefined' ? ACORDES_DB[nombre] : null;
+      if (datos) {
+        modalDiagrama.innerHTML = construirSvgAcorde(datos);
+        modalDiagrama.style.display = 'block';
+        modalSinDatos.style.display = 'none';
+      } else {
+        modalDiagrama.innerHTML = '';
+        modalDiagrama.style.display = 'none';
+        modalSinDatos.style.display = 'block';
+      }
+      modalAcorde.classList.remove('modal-oculto');
+      detener();
+    }
+
+    function cerrarModalAcorde() {
+      modalAcorde.classList.add('modal-oculto');
+    }
+
+    contenidoEl.addEventListener('click', (e) => {
+      const boton = e.target.closest('.acorde-boton');
+      if (!boton) return;
+      mostrarAcorde(boton.dataset.acorde);
+    });
+
+    document.getElementById('modal-cerrar').onclick = cerrarModalAcorde;
+    document.getElementById('modal-backdrop').onclick = cerrarModalAcorde;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') cerrarModalAcorde();
+    });
 
     function abrirCancion(cancion) {
       tituloEl.textContent = cancion.title;

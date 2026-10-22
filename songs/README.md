@@ -30,4 +30,17 @@ título que se muestra en la lista es la **primera línea** del archivo.
 - Usar espacios, no tabs, para alinear los acordes con la letra.
 - El nombre del archivo no necesita coincidir con el título, pero conviene
   que sea parecido y sin espacios ni tildes (ej: `un-lugar-en-el-mundo.txt`).
-- Ver `cancion-de-ejemplo.txt` como referencia de formato.
+
+## Diagramas de acordes
+
+En el visor, cada acorde (no toda la línea, cada palabra tipo `Em`, `F#m`,
+`Am/G`, etc.) es clickeable y muestra un diagrama de cómo tocarlo. Los
+diagramas salen de `../acordes.js`, un diccionario chico con solo los
+acordes que ya se usan en las canciones subidas.
+
+Si agregás una canción con un acorde nuevo que no está en ese diccionario,
+no pasa nada grave: el acorde se sigue resaltando y es clickeable, pero al
+tocarlo avisa que todavía no tiene diagrama. Para agregarlo, pedile a
+Claude que regenere `acordes.js` incluyendo el acorde nuevo (usa como
+fuente `chords-db`, de dominio MIT, así que es gratis y no depende de
+ningún servicio externo).
