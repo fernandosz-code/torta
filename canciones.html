@@ -539,6 +539,10 @@
 
     visor.addEventListener('pointerdown', (e) => {
       if (e.target.closest('#controles')) return;
+      // Tocar la pantalla mientras reproduce pausa el auto-scroll, así se
+      // puede mover la página libremente (por ejemplo, para arriba) sin
+      // que el scroll automático lo pelee.
+      if (reproduciendo) detener();
       mostrarControles();
     });
 
