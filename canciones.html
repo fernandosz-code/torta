@@ -85,22 +85,21 @@
       font-size: 17px;
       line-height: 1.6;
     }
-    /* Cada línea se alinea según su propio contenido (no el de la canción
-       entera), para que una línea de acordes en latín dentro de una
-       canción en hebreo no quede con el orden invertido. */
+    /* El lado de alineación (izquierda/derecha) se decide por canción
+       completa: si el .txt tiene hebreo, todo el cuerpo (letra Y acordes)
+       se alinea a la derecha. La dirección interna de cada línea en
+       cambio se decide línea por línea, para que una línea de acordes en
+       latín no quede con el orden invertido aunque esté alineada a la
+       derecha dentro de una canción en hebreo. */
     #contenido .linea {
       white-space: pre-wrap;
       word-break: break-word;
       unicode-bidi: isolate;
     }
-    #contenido .linea-rtl {
-      direction: rtl;
-      text-align: right;
-    }
-    #contenido .linea-ltr {
-      direction: ltr;
-      text-align: left;
-    }
+    #contenido .linea-dir-rtl { direction: rtl; }
+    #contenido .linea-dir-ltr { direction: ltr; }
+    #contenido .linea-align-right { text-align: right; }
+    #contenido .linea-align-left { text-align: left; }
     #contenido .acorde-separador {
       color: var(--naranja);
       font-weight: bold;
@@ -367,13 +366,14 @@
         .join('');
     }
 
-    function renderizarCancion(texto) {
+    function renderizarCancion(texto, cancionEsHebrea) {
+      const claseAlineacion = cancionEsHebrea ? 'linea-align-right' : 'linea-align-left';
       const html = texto
         .split('\n')
         .map((linea) => {
-          const claseDir = esHebreo(linea) ? 'linea-rtl' : 'linea-ltr';
+          const claseDir = esHebreo(linea) ? 'linea-dir-rtl' : 'linea-dir-ltr';
           const contenidoLinea = esLineaDeAcordes(linea) ? renderizarLineaAcordes(linea) : escapeHtml(linea);
-          return `<div class="linea ${claseDir}">${contenidoLinea || '&nbsp;'}</div>`;
+          return `<div class="linea ${claseDir} ${claseAlineacion}">${contenidoLinea || '&nbsp;'}</div>`;
         })
         .join('');
       contenidoEl.innerHTML = html;
@@ -494,7 +494,7 @@
 
     function abrirCancion(cancion) {
       tituloEl.textContent = cancion.title;
-      renderizarCancion(cancion.texto);
+      renderizarCancion(cancion.texto, esHebreo(cancion.texto));
       tituloEl.classList.toggle('rtl', esHebreo(cancion.title));
       headerEl.style.display = 'none';
       listaContainer.style.display = 'none';
