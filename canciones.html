@@ -81,15 +81,25 @@
     #contenido {
       margin: 0;
       padding: 0 12px 40vh;
-      white-space: pre-wrap;
-      word-break: break-word;
       font-family: "Courier New", monospace;
       font-size: 17px;
       line-height: 1.6;
     }
-    #contenido.rtl {
+    /* Cada línea se alinea según su propio contenido (no el de la canción
+       entera), para que una línea de acordes en latín dentro de una
+       canción en hebreo no quede con el orden invertido. */
+    #contenido .linea {
+      white-space: pre-wrap;
+      word-break: break-word;
+      unicode-bidi: isolate;
+    }
+    #contenido .linea-rtl {
       direction: rtl;
       text-align: right;
+    }
+    #contenido .linea-ltr {
+      direction: ltr;
+      text-align: left;
     }
     #contenido .acorde-separador {
       color: var(--naranja);
@@ -227,7 +237,7 @@
 
   <div id="visor">
     <h2 id="titulo-cancion"></h2>
-    <pre id="contenido"></pre>
+    <div id="contenido"></div>
 
     <div id="controles">
       <button id="btn-volver" class="control-btn" aria-label="Volver a la lista" title="Volver">&larr;</button>
@@ -360,8 +370,12 @@
     function renderizarCancion(texto) {
       const html = texto
         .split('\n')
-        .map((linea) => (esLineaDeAcordes(linea) ? renderizarLineaAcordes(linea) : escapeHtml(linea)))
-        .join('\n');
+        .map((linea) => {
+          const claseDir = esHebreo(linea) ? 'linea-rtl' : 'linea-ltr';
+          const contenidoLinea = esLineaDeAcordes(linea) ? renderizarLineaAcordes(linea) : escapeHtml(linea);
+          return `<div class="linea ${claseDir}">${contenidoLinea || '&nbsp;'}</div>`;
+        })
+        .join('');
       contenidoEl.innerHTML = html;
     }
 
@@ -481,9 +495,7 @@
     function abrirCancion(cancion) {
       tituloEl.textContent = cancion.title;
       renderizarCancion(cancion.texto);
-      const hebreo = esHebreo(cancion.texto);
-      tituloEl.classList.toggle('rtl', hebreo);
-      contenidoEl.classList.toggle('rtl', hebreo);
+      tituloEl.classList.toggle('rtl', esHebreo(cancion.title));
       headerEl.style.display = 'none';
       listaContainer.style.display = 'none';
       visor.style.display = 'block';
