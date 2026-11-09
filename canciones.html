@@ -329,17 +329,25 @@
 
     // Una línea se considera "de acordes" si TODOS sus tokens (separados
     // por espacios) tienen forma de acorde (G, Em, A7, F#m, Cmaj7, G/B, N.C., etc.)
-    const ACORDE_REGEX = /^(N\.?C\.?|[A-G](#|b)?(maj|min|m|dim|aug)?[0-9]*(sus[24]?|add[0-9]+)?[0-9]*(\/[A-G](#|b)?)?)$/i;
+    const ACORDE_REGEX = /^(N\.?C\.?|[A-G](#|b)?(maj|min|m|dim|aug)?[0-9]*(sus[24]?|add[0-9]+)?[0-9]*((-|\+)[0-9]+)?(\/[A-G](#|b)?)?)$/i;
     // Separadores de compás habituales en tablaturas: "|" (barra) y "%" (repetir compás anterior)
     const SEPARADOR_REGEX = /^\|+$|^%+$/;
+    // Anotaciones entre corchetes dentro de una línea de acordes, ej "[break]", "[fade]"
+    const ANOTACION_REGEX = /^\[.*\]$/;
+
+    // Saca un paréntesis de apertura/cierre pegado al acorde, ej "(C" o "Am)",
+    // para poder validarlo y buscarlo en ACORDES_DB sin el paréntesis.
+    function limpiarToken(token) {
+      return token.replace(/^\(+/, '').replace(/\)+$/, '');
+    }
 
     function esLineaDeAcordes(linea) {
       const tokens = linea.trim().split(/\s+/).filter(Boolean);
       if (!tokens.length) return false;
       let tieneAcorde = false;
       for (const t of tokens) {
-        if (SEPARADOR_REGEX.test(t)) continue;
-        if (!ACORDE_REGEX.test(t)) return false;
+        if (SEPARADOR_REGEX.test(t) || ANOTACION_REGEX.test(t)) continue;
+        if (!ACORDE_REGEX.test(limpiarToken(t))) return false;
         tieneAcorde = true;
       }
       return tieneAcorde;
@@ -358,10 +366,11 @@
         .map((parte) => {
           if (parte === '') return '';
           if (/^\s+$/.test(parte)) return escapeHtml(parte);
-          if (SEPARADOR_REGEX.test(parte)) {
+          if (SEPARADOR_REGEX.test(parte) || ANOTACION_REGEX.test(parte)) {
             return `<span class="acorde-separador">${escapeHtml(parte)}</span>`;
           }
-          return `<button type="button" class="acorde-boton" data-acorde="${escapeHtml(parte)}">${escapeHtml(parte)}</button>`;
+          const limpio = limpiarToken(parte);
+          return `<button type="button" class="acorde-boton" data-acorde="${escapeHtml(limpio)}">${escapeHtml(parte)}</button>`;
         })
         .join('');
     }
