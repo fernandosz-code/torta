@@ -83,6 +83,7 @@
       padding: 0 12px 40vh;
       font-family: "Courier New", monospace;
       font-size: 17px;
+      font-weight: bold;
       line-height: 1.6;
     }
     /* El lado de alineación (izquierda/derecha) se decide por canción
@@ -272,7 +273,7 @@
     const btnPlayPause = document.getElementById('btn-play-pause');
     const valorVelocidadEl = document.getElementById('valor-velocidad');
 
-    const PIXELES_POR_SEGUNDO_POR_UNIDAD = 6; // a velocidad=1 -> 6px/s, velocidad=10 -> 60px/s
+    const PIXELES_POR_SEGUNDO_POR_UNIDAD = 3; // a velocidad=1 -> 3px/s, velocidad=10 -> 30px/s
     let velocidad = 3; // 1 (lento) a 10 (rápido)
     let scrollAnimId = null;
     let reproduciendo = false;
@@ -302,7 +303,11 @@
 
         const canciones = await Promise.all(
           archivosTxt.map(async (item) => {
-            const texto = await (await fetch(item.download_url)).text();
+            const textoCrudo = await (await fetch(item.download_url)).text();
+            // Algunos archivos traen caracteres invisibles (espacio de
+            // ancho cero, etc.) pegados al copiar y pegar desde una web o
+            // PDF; se sacan acá para que no rompan la deteccion de acordes.
+            const texto = textoCrudo.replace(/[​-‍﻿]/g, '');
             const primeraLinea = texto.split('\n')[0].trim();
             return {
               title: primeraLinea || item.name.replace(/\.txt$/i, ''),
