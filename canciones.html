@@ -97,6 +97,21 @@
       word-break: break-word;
       unicode-bidi: isolate;
     }
+    /* Las 6 cuerdas de una tablatura tienen que quedar alineadas columna a
+       columna, así que nunca se cortan: la letra se achica para entrar en
+       el ancho de la pantalla y, si aun así no entra, el bloque entero
+       se desplaza de costado. */
+    #contenido .tab-bloque {
+      overflow-x: auto;
+      direction: ltr;
+      text-align: left;
+      line-height: 1.35;
+      margin: 4px 0;
+    }
+    #contenido .tab-bloque .linea {
+      white-space: pre;
+      word-break: normal;
+    }
     #contenido .linea-dir-rtl { direction: rtl; }
     #contenido .linea-dir-ltr { direction: ltr; }
     #contenido .linea-align-right { text-align: right; }
@@ -380,18 +395,48 @@
         .join('');
     }
 
+    function esLineaDeTab(linea) {
+      return /^\s*[a-gA-G]\|[-0-9|]/.test(linea);
+    }
+
     function renderizarCancion(texto, cancionEsHebrea) {
       const claseAlineacion = cancionEsHebrea ? 'linea-align-right' : 'linea-align-left';
-      const html = texto
-        .split('\n')
-        .map((linea) => {
-          const claseDir = esHebreo(linea) ? 'linea-dir-rtl' : 'linea-dir-ltr';
-          const contenidoLinea = esLineaDeAcordes(linea) ? renderizarLineaAcordes(linea) : escapeHtml(linea);
-          return `<div class="linea ${claseDir} ${claseAlineacion}">${contenidoLinea || '&nbsp;'}</div>`;
-        })
-        .join('');
+      let html = '';
+      let bloqueTab = [];
+      const cerrarBloqueTab = () => {
+        if (!bloqueTab.length) return;
+        html += '<div class="tab-bloque">' +
+          bloqueTab.map((l) => `<div class="linea">${escapeHtml(l)}</div>`).join('') +
+          '</div>';
+        bloqueTab = [];
+      };
+      texto.split('\n').forEach((linea) => {
+        if (esLineaDeTab(linea)) {
+          bloqueTab.push(linea);
+          return;
+        }
+        cerrarBloqueTab();
+        const claseDir = esHebreo(linea) ? 'linea-dir-rtl' : 'linea-dir-ltr';
+        const contenidoLinea = esLineaDeAcordes(linea) ? renderizarLineaAcordes(linea) : escapeHtml(linea);
+        html += `<div class="linea ${claseDir} ${claseAlineacion}">${contenidoLinea || '&nbsp;'}</div>`;
+      });
+      cerrarBloqueTab();
       contenidoEl.innerHTML = html;
     }
+
+    const TAMANO_MINIMO_TAB_PX = 9;
+    function ajustarTabs() {
+      const tamanoBase = parseFloat(getComputedStyle(contenidoEl).fontSize);
+      contenidoEl.querySelectorAll('.tab-bloque').forEach((bloque) => {
+        bloque.style.fontSize = '';
+        if (!bloque.clientWidth) return;
+        const sobra = bloque.scrollWidth / bloque.clientWidth;
+        if (sobra > 1) {
+          bloque.style.fontSize = Math.max(TAMANO_MINIMO_TAB_PX, Math.floor((tamanoBase / sobra) * 10) / 10) + 'px';
+        }
+      });
+    }
+    window.addEventListener('resize', ajustarTabs);
 
     // Diagrama de acorde en SVG a partir de los datos de ACORDES_DB
     // (baseFret/frets/fingers/barres, formato de chords-db).
@@ -513,6 +558,7 @@
       headerEl.style.display = 'none';
       listaContainer.style.display = 'none';
       visor.style.display = 'block';
+      ajustarTabs();
       visor.scrollTop = 0;
       detener();
       mostrarControles();
