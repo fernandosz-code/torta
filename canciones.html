@@ -401,27 +401,42 @@
 
     function renderizarCancion(texto, cancionEsHebrea) {
       const claseAlineacion = cancionEsHebrea ? 'linea-align-right' : 'linea-align-left';
-      let html = '';
+      const partes = [];
       let bloqueTab = [];
+      // Una línea de acordes justo arriba de una tablatura va dentro del
+      // mismo bloque, para que se achique junto con ella y siga alineada
+      // sobre sus compases.
+      let acordesSobreTab = null;
       const cerrarBloqueTab = () => {
         if (!bloqueTab.length) return;
-        html += '<div class="tab-bloque">' +
+        partes.push('<div class="tab-bloque">' +
+          (acordesSobreTab ? `<div class="linea">${renderizarLineaAcordes(acordesSobreTab)}</div>` : '') +
           bloqueTab.map((l) => `<div class="linea">${escapeHtml(l)}</div>`).join('') +
-          '</div>';
+          '</div>');
         bloqueTab = [];
+        acordesSobreTab = null;
       };
+      let anteriorEraAcordes = false;
+      let anteriorLinea = '';
       texto.split('\n').forEach((linea) => {
         if (esLineaDeTab(linea)) {
+          if (!bloqueTab.length && anteriorEraAcordes) {
+            partes.pop();
+            acordesSobreTab = anteriorLinea;
+          }
           bloqueTab.push(linea);
+          anteriorEraAcordes = false;
           return;
         }
         cerrarBloqueTab();
         const claseDir = esHebreo(linea) ? 'linea-dir-rtl' : 'linea-dir-ltr';
-        const contenidoLinea = esLineaDeAcordes(linea) ? renderizarLineaAcordes(linea) : escapeHtml(linea);
-        html += `<div class="linea ${claseDir} ${claseAlineacion}">${contenidoLinea || '&nbsp;'}</div>`;
+        anteriorEraAcordes = esLineaDeAcordes(linea);
+        anteriorLinea = linea;
+        const contenidoLinea = anteriorEraAcordes ? renderizarLineaAcordes(linea) : escapeHtml(linea);
+        partes.push(`<div class="linea ${claseDir} ${claseAlineacion}">${contenidoLinea || '&nbsp;'}</div>`);
       });
       cerrarBloqueTab();
-      contenidoEl.innerHTML = html;
+      contenidoEl.innerHTML = partes.join('');
     }
 
     const TAMANO_MINIMO_TAB_PX = 9;
